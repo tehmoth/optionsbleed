@@ -1,7 +1,6 @@
 #!/usr/bin/perl 
 use strict;
 use warnings;
-use Data::Dumper;
 
 # Optionsbleed proof of concept test
 # by Hanno Böck
@@ -35,8 +34,8 @@ sub test_bleed {
 	my $allow = $r->header('allow');
 	unless (defined $allow) {
 		printf "[none] %s %s\n", $url, $r->status_line;
+		return 0;
 	}
-	return 0 unless defined $allow;
 	if ($allow eq "") {
 		printf "[empty] %s\n", $url
 	} elsif ($allow =~ m"^[a-zA-Z]+(-[a-zA-Z]+)? *(, *[a-zA-Z]+(-[a-zA-Z]+)? *)*$") {
@@ -58,14 +57,24 @@ sub test_bleed {
 my %args = (n => 10);
 Getopt::Long::Configure ("bundling");
 GetOptions(\%args, 
-	'host|hosttocheck|h=s',
+	'help|h|?',
+	'host|hosttocheck=s',
 	'n=i',
 	'all|a',
 	'url|u'
 );
-print Dumper(\%args);
-exit unless $args{host};
-$DB::single = 1;
+if ($args{help}) {
+	pod2usage(
+		-verbose	=> 2,
+	);
+}
+unless ($args{host}) {
+	pod2usage(
+		-exitval 	=> 1,
+		-verbose	=> 99,
+		-sections	=> [qw/NAME SYNOPSIS OPTIONS/],
+	);
+}
 
 if ($args{url}) {
 	test_bleed( $args{host}, \%args );
@@ -143,13 +152,15 @@ def test_bleed(url, args):
 
 =head1 NAME
 
-optionsbleed.pl
+optionsbleed.pl - Check for the Optionsbleed vulnerability (CVE-2017-9798). 
+
+=head1 SYNOPSIS
+
+optionsbleed.pl -h hostname [--options, ..]
 
 =head1 DESCRIPTION
 
-Check for the Optionsbleed vulnerability (CVE-2017-9798).
-
-Tests server for Optionsbleed bug and other bugs in the allow 
+Tests server for Optionsbleed bug and other bugs in the Allow 
 header.
 
 Automatically checks 
@@ -158,11 +169,9 @@ except if you pass -u/--url
 
 (which means by default we check 40 times.)
 
-=head1 ARGUMENTS
+=head1 OPTIONS
 
 =over
-
-=item * -h C<hostname>     
 
 =item * --host C<hostname>
 
